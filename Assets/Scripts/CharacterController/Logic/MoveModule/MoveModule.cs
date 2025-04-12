@@ -16,7 +16,6 @@ namespace CCCD
             // 如果在地面上
             if (motor.GroundingStatus.IsStableOnGround)
             {
-                Debug.Log("onground");
                 // 重映射当前速度
                 float curVelocityMagnitude = currentVelocity.magnitude;
                 Vector3 groundNormal = motor.GroundingStatus.GroundNormal;
@@ -34,7 +33,27 @@ namespace CCCD
             }
             else // 在空中
             {
-                
+                Vector3 addVelocity = Vector3.ProjectOnPlane(ccData.Forward, ccData.UpDirection) *
+                                      (ccData.AirAccelerationSpeed * deltaTime);
+                Vector3 curVelocityOnPlane = Vector3.ProjectOnPlane(currentVelocity, ccData.UpDirection);
+                // 可继续加速
+                if (curVelocityOnPlane.magnitude < ccData.AirMoveSpeed)
+                {
+                    Vector3 newTotalVelocity =
+                        Vector3.ClampMagnitude(addVelocity + curVelocityOnPlane, ccData.AirMoveSpeed);
+                    addVelocity = newTotalVelocity - curVelocityOnPlane;
+                    Debug.Log($"cur magnitude:{curVelocityOnPlane.magnitude} addVelocity: {addVelocity}");
+                }
+                else
+                {
+                    // 防止继续加速
+                    if (Vector3.Dot(curVelocityOnPlane, addVelocity) > 0f)
+                    {
+                        addVelocity = Vector3.ProjectOnPlane(addVelocity, curVelocityOnPlane.normalized);
+                    }
+                }
+
+                currentVelocity += addVelocity;
             }
         }
     }

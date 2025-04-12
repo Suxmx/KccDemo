@@ -13,5 +13,6 @@ namespace CharacterController
         public float StableGroundDecelerationSpeed = 15;
         public float JumpUpSpeed = 10;
         public float AirMoveSpeed = 12;
+        public float AirAccelerationSpeed = 50;
     }
 }

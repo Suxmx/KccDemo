@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using CharacterController;
+using Cinemachine;
 using Sirenix.OdinInspector;
 using UnityEngine;
 
@@ -8,23 +9,49 @@ namespace CCCD
 {
     public class Unit : MonoBehaviour
     {
+        public CinemachineVirtualCameraBase VirtualCamera;
         public MyCharacterController CharacterController;
         public UnitCcData CcData = new();
         [BoxGroup("Slot")] public Transform CameraSlot;
 
+        private Vector3 debugForward;
+
         private void Awake()
         {
+            //Init Global
+            Cursor.visible = false;
+            Cursor.lockState = CursorLockMode.Locked;
+
+            //Init CC
             CharacterController = GetComponent<MyCharacterController>();
             AddModule(new MoveModule(this));
         }
 
         private void Update()
         {
-            float horizontal = Input.GetAxis("Horizontal");
-            float vertical = Input.GetAxis("Vertical");
-            Vector3 forward = new Vector3(horizontal, 0, vertical);
+            float horizontal = Input.GetAxisRaw("Horizontal");
+            float vertical = Input.GetAxisRaw("Vertical");
+            Vector3 forward = Vector3.ProjectOnPlane(Camera.main.transform.forward, Vector3.up).normalized;
+            Vector3 input = new Vector3(horizontal, 0, vertical);
+            if (input != Vector3.zero)
+            {
+                forward = Quaternion.LookRotation(input) * forward * input.magnitude;
+            }
+            else
+            {
+                forward = Vector3.zero;
+            }
+
+            debugForward = forward;
             Vector3 up = Vector3.up;
             CharacterController.SetInput(new PlayerCcInput(forward, up));
+        }
+
+        private void OnDrawGizmos()
+        {
+            Gizmos.color = Color.red;
+            Gizmos.DrawRay(transform.position, debugForward.normalized * 5);
+            Gizmos.color = Color.white;
         }
 
         #region Module
